@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: obs-app
+spec:
+  shareProcessNamespace: true
+  containers:
+  - image: asia-northeast1-docker.pkg.dev/host-shared-mc-001/any-apps/obs-sample-app:v0.0.1
+    name: app
+    ports:
+      - containerPort: 8080
+        name: http
+    env:
+      - name: APP_NAME
+        value: "service-a"
+      - name: APP_PORT
+        value: "8080"
+  - name: instrumentation
+    image: ghcr.io/open-telemetry/opentelemetry-go-instrumentation/autoinstrumentation-go:v0.2.0-alpha
+    env:
+      - name: OTEL_GO_AUTO_TARGET_EXE
+        value: /
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://tempo:4317
+      - name: OTEL_SERVICE_NAME
+        value: service-a
+    securityContext:
+      runAsUser: 0
+      capabilities:
+        add:
+          - SYS_PTRACE
+      privileged: true
